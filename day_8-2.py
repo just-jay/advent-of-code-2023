@@ -1,84 +1,62 @@
-def handValue(map):
-	v = list(map.values())
-	v.sort()
-	
-	js = map.get('J',0)  # joker modifier
+import re
+import math
 
-	if max(v) == 5: # 5 of a kind
-		return 6 
-	elif 4 in v: # 4 of a kind
-		if js == 1 or js == 4: # if other card is a joker
-			return 6 
-		return 5
-	elif 3 in v and 2 in v: # full house
-		if js == 3 or js == 2: 
-			return 6
-		return 4 
-	elif 3 in v: # 3 of a kind
-		if js == 1 or js == 3: 
-			return 5 
-		return 3 
-	elif v.count(2) == 2: #2 pairs
-		if js == 2: # if jokers are one of the pairs
-			return 5
-		elif js == 1: 
-			return 4
-		return 2 
-	elif v.count(2) == 1: #1 pair
-		if js == 1 or js == 2:
-			return 3
-		return 1 
-	else: #nothing
-		if js == 1:
-			return 1
-		return 0
+#checks if all items in list end in Z
+def allZ(l):
+	for i in l:
+		if not re.search("Z$", i):
+			return False
+	return True
 
-#convert 
-def convertString(s):
-	s = s.replace('J','a')
-	s = s.replace('1','b')
-	s = s.replace('2','c')
-	s = s.replace('3','d')
-	s = s.replace('4','e')
-	s = s.replace('5','f')
-	s = s.replace('6','g')
-	s = s.replace('7','h')
-	s = s.replace('8','i')
-	s = s.replace('9','j')
-	s = s.replace('T','k')
-	s = s.replace('Q','l')
-	s = s.replace('K','m')
-	s = s.replace('A','n')
-	return s
 
-f = open("advent_file_8", "r") 
+f = open("advent_file_8","r")
 lines = f.readlines()
 
-#seperate out the hands
-h = []
+instructions = lines.pop(0)
+lines.pop(0) #remove whitespace
+
+d = {}
 for l in lines:
-	l = l.strip().split(" ")
-	
-	# put each hand into a dict showing frequencies
-	d = {}
-	for i in l[0]:
-		if i in d.keys():
-			d[i] = d[i]+1
+	s1 = l.strip().split("=")
+	s2 = (s1[1].replace("(","")).replace(")","").split(",")
+
+	d[s1[0].strip()] = [s2[0].strip(),s2[1].strip()]
+
+# print(steps)
+starts = []
+for v in d.keys():
+	temp = re.search("A$", v)
+	if temp:
+		starts.append(temp.string)
+
+ends = []
+for v in d.keys():
+	temp = re.search("Z$", v)
+	if temp:
+		ends.append(temp.string)
+
+nums = []
+
+for curr in starts:
+	i = 0
+	steps = 0
+	while curr not in ends:
+		if i >= len(instructions)-1: #start over if you've looped around the instructions
+			i = 0
+		if instructions[i] == 'L':
+			curr = d.get(curr)[0]
 		else:
-			d[i] = 1
-	#caculate what each hand is
-	v = handValue(d)
+			curr = d.get(curr)[1]
+		i+=1
+		steps+=1
+	nums.append(steps)
 
-	#convert to all letters
-	cs = convertString(l[0])
-	h.append([v,[cs,l[0],l[1]]])
+#caculate the least common multiple of all the numbers in the array 
+def lcm(a,b):
+	return ((a*b)/math.gcd(a,b))
 
-#sort all values 
-h.sort()
+val = int(nums.pop())
 
-ret = 0
-for i in range (len(h)):
-	ret += (int(h[i][1][2]) * int(i+1))
-
-print(h)
-print(ret)
+for i in nums:
+	val = lcm(int(val), i)
+print(val)
